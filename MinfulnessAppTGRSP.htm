@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<!--
+    Licensed to the Apache Software Foundation (ASF) under one
+    or more contributor license agreements.  See the NOTICE file
+    distributed with this work for additional information
+    regarding copyright ownership.  The ASF licenses this file
+    to you under the Apache License, Version 2.0 (the
+    "License"); you may not use this file except in compliance
+    with the License.  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing,
+    software distributed under the License is distributed on an
+    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+     KIND, either express or implied.  See the License for the
+    specific language governing permissions and limitations
+    under the License.
+-->
+<html>
+<head>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+  <meta charset="UTF-8">
+  <title>Dashboard Date de contact</title>
+
+<script src="https://sapui5.hana.ondemand.com/resources/sap-ui-core.js" type="text/javascript"
+    id="sap-ui-bootstrap"
+    data-sap-ui-theme="sap_bluecrystal"
+    data-sap-ui-libs="sap.m,sap.ui.commons,sap.ui.table,sap.viz">
+</script>
+  <script type="text/javascript">
+    sap.ui.getCore().attachInit(function () {
+
+      var app = new sap.m.App("myApp", {
+        initialPage: "pgImputEmotionsData"
+      });
+// ---------------------------------------------------- DATA MODEL
+      var oDataEmotionsTriggersResponses = {
+        "Enjoyment" : {
+          "trigger": [
+            "Sensory/Pleasure",
+            "Rejoicing",
+            "Compassion/Joy",
+            "Amusement",
+            "Schadenfreude",
+            "Peace",
+            "Pride",
+            "Fiero",
+            "Naches",
+            "Wonder",
+            "Excitement",
+            "Extasy"
+          ],
+          "response": [
+            "Exclaim",
+            "Engage/connect",
+            "Gloat",
+            "Indulge",
+            "Maintain",
+            "Savor",
+            "Seek more"
+          ]
+       },
+        "Disgust"   : {
+          "trigger": [
+            "Dislike",
+            "Aversion",
+            "Distaste",
+            "Repugnance",
+            "Revulsion",
+            "Abhorrence",
+            "Loathing"
+          ],
+          "response": [
+            "Avoid",
+            "Dehumanize",
+            "Vomit",
+            "Withdraw"
+          ]
+       },
+        "Fear"      : {
+          "trigger": [
+            "Trepidation",
+            "Nervousness",
+            "Anxiety",
+            "Dread",
+            "Desperation",
+            "Panic",
+            "Horror",
+            "Terror"
+          ],
+          "response": [
+            "Avoid",
+            "Freeze",
+            "Hesitate",
+            "Ruminate",
+            "Scream/Yell",
+            "Withdraw",
+            "Worry"
+          ]
+       },
+        "Anger"     : {
+          "trigger": [
+            "Annoyance",
+            "Frustration",
+            "Exasperation",
+            "Argumentativeness",
+            "Bitterness",
+            "Vengefulness",
+            "Fury"
+          ],
+          "response": [
+            "Dispute",
+            "Be passive-aggresive",
+            "Insult",
+            "Quarrel",
+            "Scream/Yell",
+            "Simmer/Brood",
+            "Suppress",
+            "Use physical force",
+            "Undermine"
+          ]
+       },
+        "Sadness"   :{
+          "trigger": [
+            "Disappointment",
+            "Discouragement",
+            "Distraughtness",
+            "Resignation",
+            "Helplessness",
+            "Hopelessness",
+            "Misery",
+            "Despair",
+            "Grief",
+            "Sorrow",
+            "Anguish"
+          ],
+          "response": [
+            "Feel ashamed",
+            "Mourn",
+            "Protest",
+            "Ruminate",
+            "Seek comfort",
+            "Withdraw"
+          ]
+       }
+      };
+
+      var oDataEmotions = {
+          "Enjoyment" : 0,
+          "Disgust"   : 0,
+          "Fear"      : 0,
+          "Anger"     : 0,
+          "Sadness"   : 0
+         };
+
+      var vEmotions = [
+        "Enjoyment",
+        "Disgust"  ,
+        "Fear"      ,
+        "Anger"     ,
+        "Sadness"  
+      ];
+
+      var vEmotionSelected = "";
+      var vEmotionTrigger = "";
+      var vEmotionRespunse = "";
+      var oEmotionChartsPg = [];
+      var oHeatmapsDatasets = [];
+      var oEmotionCharts = [];
+      var oModel = new sap.ui.model.json.JSONModel();
+      var oModelEmotions = new sap.ui.model.json.JSONModel();
+
+      oModelEmotions.setData(oDataEmotions);
+      dataHeatmaps = InitMaxtrixRecordings(vEmotions, oDataEmotionsTriggersResponses);
+
+      var  oBtnEmotions = [];
+      vEmotions.forEach(btnEmotionCreation);
+
+      function btnEmotionCreation(item, index) {
+        oBtnEmotions.push( new sap.m.Button({
+            text : item,
+            width: "100%",
+            press : function () {
+              vEmotionSelected = item;
+              oDataEmotions[item] = oDataEmotions[item] +1;
+              oModelEmotion.setData(getmydataEmotion(vEmotions,oDataEmotions));
+             
+              oRadioButtonEmotionTriggers.destroyItems();
+
+              oDataEmotionsTriggersResponses[vEmotionSelected]["trigger"].forEach((itemTrigger) => {
+                oRadioButtonEmotionTriggers.addItem( new sap.ui.core.Item({
+                  text : itemTrigger,
+                  tooltip : itemTrigger,
+                  key : itemTrigger
+                }));
+              });
+
+              oRadioButtonEmotionResponses.destroyItems();
+              oDataEmotionsTriggersResponses[vEmotionSelected]["response"].forEach((itemResponse) => {
+                oRadioButtonEmotionResponses.addItem( new sap.ui.core.Item({
+                  text : itemResponse,
+                  tooltip : itemResponse,
+                  key : itemResponse
+                }));
+              });
+
+              app.to("pgEmotionTriggersResponses");
+            }
+          }))
+      };
+
+       oBtnViewChart = new sap.m.Button({
+            text : "View Charts",
+            width: "100%",
+            press : function () {
+
+              app.to("pgChart");
+            }
+          });
+
+       oBtnDeleteRecordings = new sap.m.Button({
+            text : "Delete Recordings",
+            width: "100%",
+            press : function () {
+            oDataEmotions = deleteRecordings(vEmotions,oDataEmotions);
+            oModelEmotion.setData(getmydataEmotion(vEmotions,oDataEmotions));
+            dataHeatmaps = InitMaxtrixRecordings(vEmotions, oDataEmotionsTriggersResponses);
+            }
+          });
+
+// ---------------------------------------------------- PAGE selection criterias : BEGIN
+
+    hboxViewChart = new sap.m.HBox({
+      width : "100%",
+      alignItems : "Center",
+      justifyContent : "Center",
+      items:[
+        oBtnViewChart,
+        oBtnDeleteRecordings
+      ]
+    });
+
+    oBtnEmotions.push(hboxViewChart);
+    vboxImputEmotionsData = new sap.m.VBox({
+      width : "100%",
+      alignItems : "Center",
+      justifyContent : "Center",
+      items: oBtnEmotions,
+    });
+    
+     var pgIED = new sap.m.Page("pgImputEmotionsData", {
+        title : "Emotion Recording",
+        showNavButton : false,
+        content :
+        [ vboxImputEmotionsData
+         ]
+      });
+      app.addPage(pgIED);
+// ---------------------------------------------------- PAGE IMPUT EMOTIONS DATA : END
+
+// ---------------------------------------------------------------------- Emotion Triggers Responses : BEGIN
+      var oRadioButtonEmotionTriggers = new sap.ui.commons.RadioButtonGroup({
+              tooltip : "Choose the trigger!",
+              columns : 1,
+              selectedIndex : 0,
+              select : function() {}
+            });
+
+      var oLabeloRBGroupTRG = new sap.m.Label({ text: "Choose the trigger!: ", labelFor: oRadioButtonEmotionTriggers});
+      var flexBoxRBGroupTRG = new sap.m.FlexBox("rbg6", {
+              alignItems: "Start",
+              direction: "Column",
+              items: [
+              oLabeloRBGroupTRG, oRadioButtonEmotionTriggers
+              ]});
+
+
+      var oRadioButtonEmotionResponses = new sap.ui.commons.RadioButtonGroup({
+        tooltip : "Choose the response!",
+        columns : 1,
+        selectedIndex : 0,
+        select : function() {}
+        });
+      var oLabeloRBGroupRSP = new sap.m.Label({ text: "Choose the trigger!: ", labelFor: oRadioButtonEmotionResponses});
+      var flexBoxRBGroupRSP = new sap.m.FlexBox("RSP", {
+        alignItems: "Start",
+        direction: "Column",
+        items: [
+          oLabeloRBGroupRSP, 
+          oRadioButtonEmotionResponses
+        ]
+      });
+
+      vEmotions.forEach( (itemEmotion) => {
+          oDataEmotionsTriggersResponses[itemEmotion]["response"].forEach((itemResponse) => {
+            oRadioButtonEmotionResponses.addItem( new sap.ui.core.Item({
+            text : itemResponse,
+            tooltip : itemResponse,
+            key : itemResponse
+          }))
+        })
+      });
+
+      vboxImputEmotionsTrigger = new sap.m.VBox({
+        width : "50%",
+        alignItems : "Center",
+        justifyContent : "Start",
+        items:  [flexBoxRBGroupTRG]
+      });
+
+      vboxImputEmotionsResponse = new sap.m.VBox({
+        width : "500%",
+        alignItems : "Center",
+        justifyContent : "Start",
+        items:  [flexBoxRBGroupRSP]
+      });
+
+      hboxViewImputTRData = new sap.m.HBox({
+        width : "100%",
+        alignItems : "Center",
+        justifyContent : "Center",
+        items:[
+          vboxImputEmotionsTrigger,
+          vboxImputEmotionsResponse
+        ]
+      });
+
+      var pgEmotionTriggersResponses = new sap.m.Page("pgEmotionTriggersResponses", {
+              title : "Emotion Trigger & Response",
+              showNavButton : true,
+              navButtonPress : function () {
+                vEmotionTrigger = oRadioButtonEmotionTriggers.getSelectedItem().getText();
+                vEmotionRespunse = oRadioButtonEmotionResponses.getSelectedItem().getText();
+                dataHeatmaps = UpdateMaxtrixRecordings(dataHeatmaps, vEmotionSelected, vEmotionTrigger, vEmotionRespunse);
+                oModel.setData(dataHeatmaps);
+
+                app.back();
+              },
+              content :
+                hboxViewImputTRData
+            });
+      app.addPage(pgEmotionTriggersResponses);
+// ---------------------------------------------------------------------- Emotion Response & Trigger Recording : BEGIN
+
+// ----- DASHBOARD Emotion: BEGIN
+      var oModelEmotion = new sap.ui.model.json.JSONModel();
+      var mydataEmotion =  getmydataEmotion(vEmotions, oDataEmotions);
+
+      oModelEmotion.setData(mydataEmotion);
+      var oDatasetEmotion = new sap.viz.ui5.data.FlattenedDataset({
+          dimensions : [{
+            name : "Emotion",
+            value : "{Emotion}"}],
+          measures : [{
+            name : "Recordings",
+            value : "{Recordings}"} ],
+          data : {
+            path : "/Emotions"
+          }
+        });
+
+      var oVizFrameEmotion  = new sap.viz.ui5.controls.VizFrame("idChartEmotions",{
+        width: "100%",
+        vizType: "donut"});
+
+      oVizFrameEmotion.setDataset(oDatasetEmotion);
+      oVizFrameEmotion.setModel(oModelEmotion);
+
+      var legendPosition = new sap.viz.ui5.types.Legend({layout: {
+            position: "bottom"
+          }});
+
+      oVizFrameEmotion.setVizProperties({
+          title:{
+            text : "Emotions recorded"
+          },
+          legendGroup: {
+            layout: {
+              position: "bottom"
+            }
+          },
+          plotArea: {
+            colorPalette : d3.scale.category20().range(),
+            drawingEffect: "glossy"
+          },
+          legend: {
+            title: {
+              visible: true,
+              text: "Emotions"
+              },
+            label: {
+              style: {
+                color: "red"
+              }
+            }
+          },
+          dataLabel : {
+             positionPreference : true,
+             automaticInOutside : false,
+             outsideVisible : false,
+             position : 'inside',
+             visible : true,
+             type : 'percentage'
+          }
+      });
+
+    var feedSizeEmotion = new sap.viz.ui5.controls.common.feeds.FeedItem({
+          'uid': "size",
+          'type': "Measure",
+          'values': ["Recordings"]
+        });
+    oVizFrameEmotion.addFeed(feedSizeEmotion);
+    var feedColorEmotion = new sap.viz.ui5.controls.common.feeds.FeedItem({
+          'uid': "color",
+          'type': "Dimension",
+          'values': ["Emotion"]
+        });
+    oVizFrameEmotion.addFeed(feedColorEmotion);
+
+// ------------------------------------------------------------- GRAFIC : BEGIN
+
+// ---------------------------------- HEATMAP BEGIN
+
+		oModel.setData(dataHeatmaps);
+		
+    oEmotionChartsPg.push(oVizFrameEmotion);
+
+    vEmotions.forEach( (itemEmotion) => {
+      oHeatmapsDatasets.push([itemEmotion]);
+      oHeatmapsDatasets[itemEmotion] = new sap.viz.core.FlattenedDataset({
+			  dimensions : [{
+			    axis : 2,
+			    name : 'Response',
+			    value : "{Response}"
+			  },{
+			    axis : 1,
+			    name : 'Trigger',
+			    value : "{Trigger}"
+			  }],
+			  measures : [{
+				  axis:2,
+			    name : 'Recordings',
+				  value : '{Recordings}'
+			  }],
+			  data : {path : "/" + itemEmotion}
+		  });
+      oHeatmapsDatasets[itemEmotion].setModel(oModel);
+
+      oEmotionCharts.push([itemEmotion]);
+      oEmotionCharts[itemEmotion] = new sap.viz.ui5.Heatmap({
+        width: "100%",
+        title : {
+          visible : true,
+          text : 'Heatmap for ' + itemEmotion
+        }
+      });
+      oEmotionCharts[itemEmotion].setDataset(oHeatmapsDatasets[itemEmotion]);
+      oEmotionChartsPg.push(oEmotionCharts[itemEmotion]);  
+    });
+
+    // -----------------  HEATMAPS GENERATION END
+
+    var pgChart = new sap.m.Page("pgChart", {
+      title : "Emotion Graph",
+      showNavButton : true,
+      navButtonPress : function () {
+        // go back to the previous page
+        app.back();
+      },
+      content : oEmotionChartsPg
+    });
+    app.addPage(pgChart);
+// --------------------------------- GRAFIC : END
+
+// ---------------------------------------------------- CONTENT : BEGIN
+      // place the app into the HTML document
+    app.placeAt("content");
+// ---------------------------------------------------- CONTENT : END
+    });
+//---------------------------------------------------------------------------------------------------------- GENERAL FUNCTIONS
+    function getmydataEmotion(vEmotions, oDataEmotions) {
+
+      var mydataEmotion = {"Emotions" : []};
+      vEmotions.forEach( (itemEmotion) => {
+        mydataEmotion.Emotions.push({"Emotion" : itemEmotion, "Recordings": oDataEmotions[itemEmotion]})
+        });
+        return mydataEmotion;
+    };
+
+    function deleteRecordings(vEmotions, oDataEmotions) {
+      vEmotions.forEach( (itemEmotion) => {
+         oDataEmotions[itemEmotion] = 0
+        });
+      return oDataEmotions
+    };
+
+    function UpdateMaxtrixRecordings(dataJson, itemEmotion, itemTrigger, itemResponse) {
+      for (var i = 0; i < dataJson[itemEmotion].length; i++) {
+        if (dataJson[itemEmotion][i].Trigger == itemTrigger && dataJson[itemEmotion][i].Response == itemResponse ) {
+          dataJson[itemEmotion][i].Recordings += 1;
+          return dataJson;
+        };
+      };
+      return dataJson;
+    };
+
+    function InitMaxtrixRecordings(vEmotions, oDataEmotionsTriggersResponses) {
+      var dataJson = {
+        "Enjoyment": [], "Disgust": [], "Fear": [], "Anger": [], "Sadness": []
+      };
+      vEmotions.forEach( (itemEmotion) => {
+          oDataEmotionsTriggersResponses[itemEmotion]["trigger"].forEach((itemTrigger) => {
+            oDataEmotionsTriggersResponses[itemEmotion]["response"].forEach((itemResponse) => {
+              dataJson[itemEmotion].push({"Response": itemResponse, "Trigger": itemTrigger, "Recordings": 0});
+          })
+        })
+      });
+    return dataJson;
+    };
+  </script>
+
+</head>
+<body class="sapUiBody" id="content">
+</body>
+</html>
